@@ -8,7 +8,8 @@ from twin import *
 from scipy.optimize import minimize
 import numpy as np
 import matplotlib.pyplot as plt
-
+import seaborn as sns
+from matplotlib.colors import LogNorm
 
 def plotTol(trueAnswer, b_i1, b_i2, xx, x2):
     x_grid_ = np.arange(-5, 5, 0.25)
@@ -145,61 +146,101 @@ def MSE(x, A, b):
 
 if __name__ == '__main__':
     #example.examp()
-    smt.smtmain()
-    k, b = smt.init_pixels(smt.NUM_PIXEL)
-    A = smt.matrixA(k, b, smt.NUM_CIRCLE)
-    Asrc = smt.matrixA(k, b, smt.NUM_CIRCLE)
-    start_x = -2
-    random.seed(30)
-    #b1 = [220 + (random.uniform(-1, 1) * 10) for i in range(len(b))]
-#    trueAnswer = [1 + random.uniform(-1, 1) for i in range(len(A[0]))]
-    trueAnswer = [0.1 + pow(i - 3, 1) for i in range(len(A[0]))]
-    trueAnswer[0:3] = [trueAnswer[2 - i] * (0.5) for i in range(3)]
-    trueAnswer = trueAnswer[2:7] + trueAnswer[0:2]
-    b1 = [0] * len(b)
-    for i in range(len(A)):
-        for j in range(len(A[i])):
-            b1[i] += A[i][j] * trueAnswer[j]
-    b = b1
-    print(trueAnswer)
-    #b1 = [sqrt((x - start_x) * (x - start_x) + (k[i] * (x - start_x) + b[i]) * (k[i] * (x - start_x) + b[i])) for i, x in enumerate(b1)]
-    for i in range(len(A)):
-        for j in range(len(A[i])):
-            A[i][j] = np.longdouble(A[i][j])
-            A[i][j] = [A[i][j], A[i][j]]
-    A = Interval(A)
-    b_i1 = Interval([[b[i] * 0.75, b[i] * 1.25] for i in range(len(b))])
-    b_i2 = Interval([[b[i] * 0.9, b[i] * 1.1] for i in range(len(b))])
-    b_tw = [Twin(b_i2[i], b_i1[i]) for i in range(len(b))]
-    for i in range(len(b)):
-        print(b_tw[i])
-    xx = linear.Tol.maximize(A, b_i1)
-    x2 = linear.Tol.maximize(A, b_i2)
-    #x2 = linear.Tol.value(A, b_i1, trueAnswer)
+    #smt.smtmain()
+    xt = [0] * (17-9)
+    yt = [0] * (11-7)
+    data = [[0]*(11-7) for i in range(9, 17)]
+    data2 = [[0]*(11-7) for i in range(9, 17)]
+    for pix in range(9, 17):
+        for cir in range(7, 11):
+            xt[pix-9] = pix
+            yt[cir-7] = cir
+            smt.NUM_PIXEL = pix
+            smt.NUM_CIRCLE = cir
+            k, b = smt.init_pixels(smt.NUM_PIXEL)
+            A = smt.matrixA(k, b, smt.NUM_CIRCLE)
+            Asrc = smt.matrixA(k, b, smt.NUM_CIRCLE)
+            start_x = -2
+            random.seed(30)
+        #    trueAnswer = [1 + random.uniform(-1, 1) for i in range(len(A[0]))]
+            trueAnswer = [0.1 + pow(i - 3, 1) for i in range(len(A[0]))]
+            trueAnswer[0:3] = [trueAnswer[2 - i] * (0.5) for i in range(3)]
+            trueAnswer = trueAnswer[2:len(A[0])] + trueAnswer[0:2]
+            b1 = [0] * len(b)
+            for i in range(len(A)):
+                for j in range(len(A[i])):
+                    b1[i] += A[i][j] * trueAnswer[j]
+            b = b1
+            #print(trueAnswer)
+            for i in range(len(A)):
+                for j in range(len(A[i])):
+                    A[i][j] = np.longdouble(A[i][j])
+                    A[i][j] = [A[i][j], A[i][j]]
+            A = Interval(A)
+            b_i1 = Interval([[b[i] * 0.75, b[i] * 1.25] for i in range(len(b))])
+            b_i2 = Interval([[b[i] * 0.9, b[i] * 1.1] for i in range(len(b))])
+            b_tw = [Twin(b_i2[i], b_i1[i]) for i in range(len(b))]
+            xx = linear.Tol.maximize(A, b_i1)
+            x2 = linear.Tol.maximize(A, b_i2)
+            tru = trueAnswer
+            xx1 = xx[0]
+            xx2 = x2[0]
+            data[pix - 9][cir-7] = np.linalg.norm(tru-xx1)
+            data2[pix - 9][cir-7] = np.linalg.norm(tru-xx2)
+            if pix==13 and cir==7:
+                print("Outer", data[pix - 9][cir-7])
+                print("Inner", data2[pix - 9][cir - 7])
+            #x2 = linear.Tol.value(A, b_i1, trueAnswer)
 
-    print(xx)
-    print(x2)
+#    print(xx)
+#    print(x2)
+#    print(trueAnswer)
+            x0 = [i for i in range(len(trueAnswer))]
+#    for i in range(len(b)):
+#        plt.plot((i, i), (b_tw[i].X.a, b_tw[i].X.b), 'r')
+#        plt.plot((i, i), (b_tw[i].X_l.a, b_tw[i].X_l.b), 'b')
 
-    x0 = [i for i in range(len(trueAnswer))]
-    #xxx = minimize(MSE, x0, args=(A, b_tw))
-    #for i in range(7):
-        #for j in range(7):
-            #Ab[i][j] = Asrc[i][j]
-            #Ab[7][j] = 0#b[j]
-    for i in range(len(b)):
-        plt.plot((i, i), (b_tw[i].X.a, b_tw[i].X.b), 'r')
-        plt.plot((i, i), (b_tw[i].X_l.a, b_tw[i].X_l.b), 'b')
-
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.grid()
-    plt.title("twin vector")
+#    plt.xlabel('x')
+#    plt.ylabel('y')
+#    plt.grid()
+#    plt.title("twin vector")
+#    plt.figure()
+    #xxx = solve_gauss(Asrc, b_tw)
+    #for i in range(len(xxx)):
+    #    print(xxx[i])
+    fig, ax = plt.subplots()
+    for row in range(len(data)):
+        for cell in range(len(data[0])):
+            data[row][cell] = float(data[row][cell])
+            data2[row][cell] = float(data2[row][cell])
+    data = np.array(data)
+    data2 = np.array(data2)
+    #plt.imshow(data, cmap=plt.colormaps["summer"])
+    #ax.set_xticks(np.arange(len(yt)), labels=yt)
+    #ax.set_yticks(np.arange(len(xt)), labels=xt)
+    #plt.colorbar()
+    #plotTol(trueAnswer, b_i1, b_i2, xx, x2)
+    cm = sns.diverging_palette(110, 180, s=100, as_cmap=True)
+    cm=sns.color_palette("crest", as_cmap=True)
+    htmap = sns.heatmap(data, cmap=cm, norm=LogNorm(data.min(),data.max()),
+            cbar_kws={"ticks":[1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7,
+                               1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0,1,10,1e2]},
+            vmin = 1e-13, vmax=100, annot=True)
+    htmap.set_xticks(np.arange(len(yt)), labels=yt)
+    htmap.set_yticks(np.arange(len(xt)), labels=xt)
+    htmap.set(xlabel='Circles', ylabel='Pixels')
+    htmap.set(title='Outer intervals')
     plt.figure()
-    xxx = solve_gauss(Asrc, b_tw)
-    for i in range(len(xxx)):
-        print(xxx[i])
-
-    plotTol(trueAnswer, b_i1, b_i2, xx, x2)
+    htmap = sns.heatmap(data2, cmap=cm, norm=LogNorm(data.min(),data.max()),
+            cbar_kws={"ticks":[1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7,
+                               1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0,1,10,1e2]},
+            vmin = 1e-13, vmax=100, annot=True)
+    htmap.set_xticks(np.arange(len(yt)), labels=yt)
+    htmap.set_yticks(np.arange(len(xt)), labels=xt)
+    htmap.set(xlabel='Circles', ylabel='Pixels')
+    htmap.set(title='Inner intervals')
     plt.show()
+
+    print("a")
 
 
